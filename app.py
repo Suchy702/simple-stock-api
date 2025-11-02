@@ -21,29 +21,29 @@ def get_stock_info():
     
     try:
         stock = yf.Ticker(ticker)
-        info = stock.info
         
-        # Wybierz najważniejsze informacje
+        # Używamy fast_info - dużo szybsze i mniej zapytań do API
+        fast_info = stock.fast_info
+        
+        # Pobierz tylko podstawowe dane cenowe
         stock_data = {
             'ticker': ticker.upper(),
-            'name': info.get('longName', 'N/A'),
-            'currency': info.get('currency', 'N/A'),
-            'currentPrice': info.get('currentPrice', info.get('regularMarketPrice', 'N/A')),
-            'previousClose': info.get('previousClose', 'N/A'),
-            'open': info.get('open', info.get('regularMarketOpen', 'N/A')),
-            'dayHigh': info.get('dayHigh', info.get('regularMarketDayHigh', 'N/A')),
-            'dayLow': info.get('dayLow', info.get('regularMarketDayLow', 'N/A')),
-            'volume': info.get('volume', info.get('regularMarketVolume', 'N/A')),
-            'marketCap': info.get('marketCap', 'N/A'),
-            'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh', 'N/A'),
-            'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow', 'N/A'),
-            'sector': info.get('sector', 'N/A'),
-            'industry': info.get('industry', 'N/A'),
+            'open': fast_info.get('open', 'N/A'),
+            'currency': fast_info.get('currency', 'USD'),
         }
         
         return jsonify(stock_data)
     
     except Exception as e:
+        error_msg = str(e)
+        
+        # Specjalna obsługa błędu 429 (Too Many Requests)
+        if '429' in error_msg or 'Too Many Requests' in error_msg:
+            return jsonify({
+                'error': 'Rate limit exceeded. Please try again in a moment.',
+                'ticker': ticker.upper()
+            }), 429
+        
         return jsonify({'error': f'Failed to fetch data for ticker {ticker}: {str(e)}'}), 500
 
 
