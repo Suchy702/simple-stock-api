@@ -22,14 +22,43 @@ def get_stock_info():
     try:
         stock = yf.Ticker(ticker)
         
-        # Używamy fast_info - dużo szybsze i mniej zapytań do API
-        fast_info = stock.fast_info
+        # Próbujemy różne okresy - Yahoo czasem ma problemy z niektórymi
+        hist = None
+        for period in ['1d', '5d', '1mo']:
+            try:
+                hist = stock.history(period=period)
+                if not hist.empty:
+                    break
+            except:
+                continue
         
-        # Pobierz tylko podstawowe dane cenowe
+        if hist is None or hist.empty:
+            # Fallback - próbuj download
+            try:
+                data = yf.download(ticker, period='1d', progress=False)
+                if not data.empty:
+                    hist = data
+            except:
+                pass
+        
+        if hist is None or hist.empty:
+            return jsonify({
+                'error': f'No data available for ticker {ticker}',
+                'suggestion': 'Yahoo Finance may be experiencing issues or ticker symbol is incorrect. Try again later.'
+            }), 404
+        
+        # Pobierz ostatni wiersz z danymi (najnowsze dane)
+        last = hist.iloc[-1]
+        previous = hist.iloc[-2] if len(hist) > 1 else last
+        
         stock_data = {
             'ticker': ticker.upper(),
-            'open': fast_info.get('open', 'N/A'),
-            'currency': fast_info.get('currency', 'USD'),
+            'currentPrice': round(float(last['Close']), 2),
+            'previousClose': round(float(previous['Close']), 2),
+            'open': round(float(last['Open']), 2),
+            'dayHigh': round(float(last['High']), 2),
+            'dayLow': round(float(last['Low']), 2),
+            'volume': int(last['Volume']),
         }
         
         return jsonify(stock_data)
@@ -40,11 +69,15 @@ def get_stock_info():
         # Specjalna obsługa błędu 429 (Too Many Requests)
         if '429' in error_msg or 'Too Many Requests' in error_msg:
             return jsonify({
-                'error': 'Rate limit exceeded. Please try again in a moment.',
+                'error': 'Rate limit exceeded. Yahoo Finance has request limits.',
+                'suggestion': 'Please try again in a few moments.',
                 'ticker': ticker.upper()
             }), 429
         
-        return jsonify({'error': f'Failed to fetch data for ticker {ticker}: {str(e)}'}), 500
+        return jsonify({
+            'error': f'Failed to fetch data for ticker {ticker}',
+            'details': error_msg
+        }), 500
 
 
 if __name__ == '__main__':
