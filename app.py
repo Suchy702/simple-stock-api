@@ -51,6 +51,13 @@ def get_stock_info():
         last = hist.iloc[-1]
         previous = hist.iloc[-2] if len(hist) > 1 else last
         
+        # Pobierz informację o walucie
+        try:
+            info = stock.info
+            currency = info.get('currency', None)
+        except:
+            currency = None
+        
         stock_data = {
             'ticker': ticker.upper(),
             'currentPrice': round(float(last['Close']), 2),
@@ -59,6 +66,7 @@ def get_stock_info():
             'dayHigh': round(float(last['High']), 2),
             'dayLow': round(float(last['Low']), 2),
             'volume': int(last['Volume']),
+            'currency': currency,
         }
         
         return jsonify(stock_data)
