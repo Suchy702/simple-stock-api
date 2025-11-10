@@ -1,12 +1,11 @@
 # Simple Stock API
 
-Proste REST API w Pythonie do pobierania danych o akcjach za pomocą yfinance. Aplikacja jest gotowa do wdrożenia na fly.io.
+Proste REST API w Pythonie do pobierania danych o akcjach za pomocą yfinance. Aplikacja jest gotowa do wdrożenia na Render.
 
 ## 📋 Wymagania
 
 - Python 3.11+
-- Konto na [fly.io](https://fly.io) (do deploymentu)
-- flyctl CLI (do deploymentu)
+- Konto na [Render](https://render.com) (do deploymentu)
 
 ## 🚀 Instalacja lokalna
 
@@ -77,50 +76,78 @@ curl "http://localhost:8080/stock?ticker=MSFT"
 curl "http://localhost:8080/stock?ticker=TSLA"
 ```
 
-## 🌐 Deployment na fly.io
+## 🌐 Deployment na Render
 
-1. Zainstaluj flyctl:
-```bash
-curl -L https://fly.io/install.sh | sh
+### Metoda 1: Przez Dashboard (Najprostsza)
+
+1. Wejdź na [Render Dashboard](https://dashboard.render.com/)
+2. Kliknij **"New +"** → **"Web Service"**
+3. Połącz swoje repozytorium GitHub
+4. Wybierz repozytorium `simple-stock-api`
+5. Render automatycznie wykryje plik `render.yaml` i skonfiguruje wszystko
+6. Kliknij **"Create Web Service"**
+
+Render automatycznie:
+- Zainstaluje zależności z `requirements.txt`
+- Uruchomi aplikację przez Gunicorn
+- Przydzieli darmowy subdomain (np. `simple-stock-api.onrender.com`)
+
+### Metoda 2: Przez render.yaml (Blueprint)
+
+1. Zaloguj się na [Render](https://render.com)
+2. Przejdź do **Blueprints**
+3. Kliknij **"New Blueprint Instance"**
+4. Połącz repozytorium GitHub
+5. Render automatycznie wykryje `render.yaml` i wdroży aplikację
+
+### Ważne informacje o Render
+
+**Darmowy tier:**
+- Aplikacje "usypiają" po 15 minutach bezczynności
+- Pierwsze uruchomienie po uśpieniu może potrwać 30-60 sekund
+- 750 godzin/miesiąc darmowego czasu działania
+- Nie wymaga karty kredytowej
+
+**Konfiguracja (render.yaml):**
+- Runtime: Python 3.11
+- Build: `pip install -r requirements.txt`
+- Start: `gunicorn app:app`
+- Auto-deploy po push do repozytorium
+
+### Deployment ręczny (opcjonalnie)
+
+Jeśli wolisz konfigurować ręcznie:
+
+1. Utwórz nowy Web Service w Render Dashboard
+2. Skonfiguruj:
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn app:app`
+   - **Environment:** Python 3
+
+## 🚀 Po wdrożeniu
+
+Twoja aplikacja będzie dostępna pod adresem:
+```
+https://simple-stock-api.onrender.com
 ```
 
-2. Zaloguj się do fly.io:
+Przykładowe wywołania:
 ```bash
-flyctl auth login
+# Apple
+curl "https://simple-stock-api.onrender.com/stock?ticker=AAPL"
+
+# Microsoft  
+curl "https://simple-stock-api.onrender.com/stock?ticker=MSFT"
 ```
 
-3. Uruchom aplikację (pierwsza komenda utworzy aplikację):
-```bash
-flyctl launch
-```
-
-4. Deploy aplikacji:
-```bash
-flyctl deploy
-```
-
-5. Otwórz aplikację w przeglądarce:
-```bash
-flyctl open
-```
-
-Twoja aplikacja będzie dostępna pod adresem: `https://simple-stock-api.fly.dev`
-
-### Konfiguracja fly.io
-
-Plik `fly.toml` zawiera konfigurację:
-- Region: `waw` (Warszawa)
-- Port wewnętrzny: `8080`
-- Auto-scaling: włączony
-- Minimalna ilość maszyn: 0 (oszczędność kosztów)
+**Uwaga:** Przy pierwszym wywołaniu po okresie bezczynności, odpowiedź może potrwać ~30-60 sekund (cold start).
 
 ## 🛠️ Technologie
 
 - **Flask** - framework webowy
 - **yfinance** - biblioteka do pobierania danych giełdowych
 - **Gunicorn** - serwer WSGI do produkcji
-- **Docker** - konteneryzacja
-- **fly.io** - platforma deploymentowa
+- **Render** - platforma deploymentowa (darmowy tier)
 
 ## 📝 Licencja
 
