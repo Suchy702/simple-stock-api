@@ -1,7 +1,13 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import yfinance as yf
 
 app = Flask(__name__)
+
+CORS(app, origins=[
+    'https://simple-fund-cf708.web.app',
+    'https://simple-fund-cf708.firebaseapp.com'
+])
 
 
 @app.route('/')
