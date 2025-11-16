@@ -4,10 +4,14 @@ import yfinance as yf
 
 app = Flask(__name__)
 
-CORS(app, origins=[
-    'https://simple-fund-cf708.web.app',
-    'https://simple-fund-cf708.firebaseapp.com'
-])
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            'https://simple-fund-cf708.web.app',
+            'https://simple-fund-cf708.firebaseapp.com'
+        ]
+    }
+})
 
 
 @app.route('/')
