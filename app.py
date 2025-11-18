@@ -8,7 +8,8 @@ CORS(app, resources={
     r"/*": {
         "origins": [
             'https://simple-fund-cf708.web.app',
-            'https://simple-fund-cf708.firebaseapp.com'
+            'https://simple-fund-cf708.firebaseapp.com',
+            'https://simplefund.me'
         ]
     }
 })
@@ -32,7 +33,7 @@ def get_stock_info():
     try:
         stock = yf.Ticker(ticker)
         
-        # Próbujemy różne okresy - Yahoo czasem ma problemy z niektórymi
+        # try different periods - yahoo sometimes has issues with certain periods
         hist = None
         for period in ['1d', '5d', '1mo']:
             try:
@@ -43,7 +44,7 @@ def get_stock_info():
                 continue
         
         if hist is None or hist.empty:
-            # Fallback - próbuj download
+            # Fallback - try download
             try:
                 data = yf.download(ticker, period='1d', progress=False)
                 if not data.empty:
@@ -57,11 +58,11 @@ def get_stock_info():
                 'suggestion': 'Yahoo Finance may be experiencing issues or ticker symbol is incorrect. Try again later.'
             }), 404
         
-        # Pobierz ostatni wiersz z danymi (najnowsze dane)
+        # Get the last row with data (most recent data)
         last = hist.iloc[-1]
         previous = hist.iloc[-2] if len(hist) > 1 else last
         
-        # Pobierz informację o walucie
+        # Get currency information
         try:
             info = stock.info
             currency = info.get('currency', None)
@@ -84,7 +85,7 @@ def get_stock_info():
     except Exception as e:
         error_msg = str(e)
         
-        # Specjalna obsługa błędu 429 (Too Many Requests)
+        # Special handling for error 429 (Too Many Requests)
         if '429' in error_msg or 'Too Many Requests' in error_msg:
             return jsonify({
                 'error': 'Rate limit exceeded. Yahoo Finance has request limits.',
@@ -99,7 +100,7 @@ def get_stock_info():
 
 
 if __name__ == '__main__':
-    # Lokalnie możesz ustawić PORT, a Heroku zrobi to automatycznie
+    # locally port 8080, heroku do it by themselfs 
     import os
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
